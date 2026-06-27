@@ -33,50 +33,111 @@ for its own auth. No account is created server-side.
   location feature (the "Navigate" button just opens Google Maps via an
   intent — no backend involved).
 
-## Connecting to the Backend
+## Running the App
+
+This machine has no Android development tools installed yet, so start from
+scratch:
+
+### 1. Install Android Studio (one-time)
+
+Download and install Android Studio from
+[developer.android.com/studio](https://developer.android.com/studio). You do
+**not** need to install Java separately — Android Studio bundles its own. On
+first launch, its setup wizard installs the Android SDK and a default
+emulator image for you.
+
+### 2. Open this project
+
+1. Launch Android Studio → **Open** → select this folder
+   (`PS_RiderApp`).
+2. Wait for **Gradle sync** to finish (watch the status bar at the bottom).
+   The first sync downloads all dependencies and can take several minutes —
+   keep an internet connection on. If it fails, copy the exact error and
+   send it to me; dependency versions are the most likely thing to need a
+   small fix since this was written without a compiler available to test it.
+
+### 3. Get a device to run on
+
+Pick one:
+
+- **Emulator (easiest, no phone needed):** in Android Studio, go to **Tools
+  → Device Manager → Create Device**, pick any phone (e.g. Pixel 8), pick a
+  system image (any recent one, e.g. API 34+, downloading it if prompted),
+  then **Finish**. Select it from the device dropdown in the toolbar.
+- **Physical Android phone:** enable Developer Options (**Settings → About
+  phone** → tap "Build number" 7 times), then enable **USB debugging**
+  (**Settings → Developer options**), then connect the phone via USB and
+  accept the "Allow USB debugging" prompt on the phone screen.
+
+### 4. Start the backend
+
+In the backend repo (`Tejas-gh/realtime-food-ordering`):
+
+```
+cd backend
+npm install
+npm run seed
+npm start
+```
+
+Leave this running in its own terminal — it listens on port 4000 by default.
+
+### 5. Point the app at the backend
 
 Edit `app/src/main/java/com/foodexpress/rider/data/Config.kt`:
 
 ```kotlin
 object Config {
-    const val API_BASE = "http://<your-backend-host>:<port>"
+    const val API_BASE = "http://<host>:<port>"
 }
 ```
 
-Use your computer's **LAN IP**, not `localhost` — on a physical device,
-`localhost` means the device itself. This should match whatever the
-customer app's `src/config.js` is already pointed at, since both apps talk
-to the same backend instance.
+- **Using the emulator:** use `http://10.0.2.2:4000` — `10.0.2.2` is the
+  emulator's special alias for your computer's own `localhost`, so no IP
+  lookup needed.
+- **Using a physical phone:** use your computer's **LAN IP** instead, e.g.
+  `http://192.168.0.5:4000`. Find it on Windows with `ipconfig` → "IPv4
+  Address" under your active Wi-Fi adapter. The phone and computer must be
+  on the same Wi-Fi network. This should match whatever the customer app's
+  `src/config.js` is already pointed at, since both apps talk to the same
+  backend instance.
 
-## Running the App
+### 6. Run
 
-1. Open this folder in Android Studio (Gradle sync will fetch dependencies
-   automatically).
-2. Make sure the backend is running: `cd backend && npm install && npm run
-   seed && npm start` (in the backend repo).
-3. Run the app on an emulator or a device on the same network as the
-   backend.
+With your device selected in the toolbar dropdown, click the green ▶ **Run**
+button (or press Shift+F10). The first build can take a few minutes.
+
+### Troubleshooting
+
+- **"Available deliveries" stays empty, or shows an error:** double-check
+  `Config.kt`'s host/port, and confirm the backend's terminal shows it's
+  running and reachable.
+- **Physical phone can't connect:** check that Windows Firewall isn't
+  blocking inbound connections on port 4000, and that the phone is on the
+  same Wi-Fi network as the computer.
+- **Gradle sync fails:** almost always a dependency-version mismatch — send
+  me the exact error text and I'll fix `gradle/libs.versions.toml`.
 
 ## Project Structure
 
 ```
 app/src/main/java/com/foodexpress/rider/
   data/
-    Config.kt                 API_BASE
-    model/Order.kt             Order/Restaurant/Customer/MenuItem + status helpers
-    remote/ApiService.kt       Retrofit endpoints
+    Config.kt                  API_BASE
+    model/Order.kt              Order/Restaurant/Customer/MenuItem + status helpers
+    remote/ApiService.kt        Retrofit endpoints
     remote/RetrofitClient.kt
-    remote/SocketManager.kt     order:new / order:updated listener
-    local/RiderPreferences.kt   DataStore: rider name/phone, active order id, history ids
+    remote/SocketManager.kt      order:new / order:updated listener
+    local/RiderPreferences.kt    DataStore: rider name/phone, active order id, history ids
     repository/OrderRepository.kt
-    ServiceLocator.kt           Manual DI (no Hilt - app is small)
+    ServiceLocator.kt            Manual DI (no Hilt - app is small)
   ui/
-    login/                     Local-only name entry
-    main/MainScreen.kt          Bottom nav: Deliveries / History / Profile
-    deliveries/                Available list + Active delivery detail
+    login/                      Local-only name entry
+    main/                       MainScreen.kt (bottom nav) + OrdersViewModel.kt (shared state)
+    deliveries/                 Available list + Active delivery detail
     history/                   Locally tracked delivered orders
-    profile/                   Rider info + log out
-    theme/                     Matches the customer app's color palette
+    profile/                    Rider info + log out
+    theme/                      Matches the customer app's color palette
 ```
 
 ## Golden Path
