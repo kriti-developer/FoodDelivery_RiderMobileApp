@@ -18,8 +18,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -61,7 +61,7 @@ fun ActiveDeliveryScreen(order: Order, viewModel: OrdersViewModel) {
                     order.restaurant.phone?.let { Text(text = it, style = MaterialTheme.typography.bodyMedium) }
 
                     Spacer(modifier = Modifier.size(16.dp))
-                    Divider()
+                    HorizontalDivider()
                     Spacer(modifier = Modifier.size(16.dp))
 
                     Text(text = "Deliver to", style = MaterialTheme.typography.labelMedium)
@@ -70,7 +70,7 @@ fun ActiveDeliveryScreen(order: Order, viewModel: OrdersViewModel) {
                     order.customer.phone?.let { Text(text = it, style = MaterialTheme.typography.bodyMedium) }
 
                     Spacer(modifier = Modifier.size(16.dp))
-                    Divider()
+                    HorizontalDivider()
                     Spacer(modifier = Modifier.size(16.dp))
 
                     Text(text = "Order", style = MaterialTheme.typography.labelMedium)
