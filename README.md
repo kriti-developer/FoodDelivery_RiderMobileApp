@@ -1,4 +1,20 @@
-# FoodExpress Rider — Rider App (Native Android)
+# FoodExpress Rider
+
+Two implementations of the rider app live in this repo:
+
+- **[`expo-app/`](expo-app/) — React Native (Expo).** This is the one to
+  use day-to-day: matches the customer app's stack exactly, runs via Expo
+  Go on your phone with no native build tooling, and is what we switched to
+  after the native Android build kept hitting environment issues (no
+  Android SDK/Studio installed initially, then a recurring Gradle/OneDrive
+  file-lock conflict). See [`expo-app/README.md`](expo-app/README.md) for
+  setup.
+- **Native Android (Kotlin), at the repo root.** Kept for reference. Below
+  is its original documentation.
+
+---
+
+# Rider App (Native Android)
 
 A native Android (Kotlin, Jetpack Compose) app for delivery riders, the
 companion to the [FoodExpress customer app](https://github.com/kriti-developer/FoodDelivery_CustomerMobileApp).

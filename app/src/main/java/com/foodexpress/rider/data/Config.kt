@@ -4,5 +4,5 @@ package com.foodexpress.rider.data
 // src/config.js uses. Can't be "localhost" on a physical device, since
 // that means the device itself, not your computer.
 object Config {
-    const val API_BASE = "http://192.168.0.5:4000"
+    const val API_BASE = "http://192.168.0.2:4000"
 }
