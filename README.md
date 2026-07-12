@@ -1,20 +1,64 @@
 # FoodExpress Rider
 
-Two implementations of the rider app live in this repo:
+Three implementations of the rider app live in this repo:
 
-- **[`expo-app/`](expo-app/) — React Native (Expo).** This is the one to
-  use day-to-day: matches the customer app's stack exactly, runs via Expo
-  Go on your phone with no native build tooling, and is what we switched to
-  after the native Android build kept hitting environment issues (no
-  Android SDK/Studio installed initially, then a recurring Gradle/OneDrive
-  file-lock conflict). See [`expo-app/README.md`](expo-app/README.md) for
-  setup.
-- **Native Android (Kotlin), at the repo root.** Kept for reference. Below
-  is its original documentation.
+- **[`expo-app/`](expo-app/) — React Native (Expo, JavaScript).** Matches
+  the customer app's stack exactly, runs via Expo Go on your phone with no
+  native build tooling, and is what we switched to after the native
+  Android build kept hitting environment issues (no Android SDK/Studio
+  installed initially, then a recurring Gradle/OneDrive file-lock
+  conflict). See [`expo-app/README.md`](expo-app/README.md) for setup.
+- **Root-level Expo app (`App.tsx`, `src/`) — React Native (Expo,
+  TypeScript).** A separate Expo rewrite, built independently from the one
+  above. See "Root-level Expo App" below for setup.
+- **Native Android (Kotlin), also at the repo root.** Kept for reference.
+  See "Native Android" below for its original documentation.
+
+If you're picking up this repo fresh, check with whoever's been working on
+it last to see which of the two Expo apps is the current one to build on —
+right now both exist side by side.
 
 ---
 
-# Rider App (Native Android)
+# Root-level Expo App (TypeScript)
+
+This workspace also contains an Expo-managed React Native version of the
+rider app, ready to run in Expo Go. It keeps the same backend contract as
+the original Android app: REST for fetching and updating orders, plus
+Socket.IO for realtime updates.
+
+## What changed
+
+- The Expo entrypoint is at the workspace root (`App.tsx`).
+- Session data is stored locally with AsyncStorage instead of Android DataStore.
+- The app still uses the same backend endpoints:
+  - `GET /api/orders/available`
+  - `GET /api/orders`
+  - `PATCH /api/orders/:id/status`
+  - Socket.IO events: `order:new` and `order:updated`
+
+## Run it in Expo Go
+
+1. Install dependencies.
+   - `npm install`
+2. Start the dev server.
+   - `npm start`
+3. Open the QR code with Expo Go on your phone.
+
+If the backend is not on the same machine, update the API base URL in `app.json` under `expo.extra.apiBaseUrl`.
+
+## Backend URL
+
+The Expo app defaults to `http://192.168.0.5:4000` because Expo Go needs a reachable LAN address. Change it to your computer's current LAN IP if needed.
+
+## Notes
+
+- The old native Android source is still in the repo. This app also lives at the repo root, alongside it.
+- If you want the QR to work on a physical phone, the phone and computer must be on the same Wi-Fi network.
+
+---
+
+# Native Android (Kotlin)
 
 A native Android (Kotlin, Jetpack Compose) app for delivery riders, the
 companion to the [FoodExpress customer app](https://github.com/kriti-developer/FoodDelivery_CustomerMobileApp).
