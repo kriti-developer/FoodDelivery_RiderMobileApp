@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "FoodExpress Rider",
+    "slug": "foodexpress-rider",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "foodexpress-rider",
+    "extra": {
+      "apiBaseUrl": "http://192.168.0.5:4000"
+    }
+  }
+}

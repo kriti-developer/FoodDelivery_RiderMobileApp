@@ -1,3 +1,4 @@
+.expo/
 *.iml
 .gradle/
 build/
@@ -9,3 +10,4 @@ captures/
 .cxx/
 *.apk
 *.aab
+node_modules
