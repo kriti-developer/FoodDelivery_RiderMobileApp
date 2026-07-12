@@ -21,25 +21,30 @@ Mirrors the customer app:
 - **AsyncStorage** — rider profile, active-order id, delivered-order history
 - **Socket.IO client** — live updates for available deliveries
 
-## Rider Identity (Local Only)
+## Rider Identity (Real Backend Accounts)
 
-Same as the customer app: there's no rider-auth endpoint on the backend, so
-logging in just saves a name (and optional phone) on-device.
+Riders are real accounts, backed by a `Rider` collection on the backend.
+Sign up hits `POST /api/auth/rider-signup` (name, phone, password — password
+is hashed server-side with scrypt, never stored or returned in plaintext),
+login hits `POST /api/auth/rider-login`. Both return a bearer token, stored
+on-device (AsyncStorage) and sent as `Authorization: Bearer <token>` on
+every order-mutating request.
 
 ## Known Backend Gaps This App Works Around
 
-- `Order.rider` is never actually populated by the backend, and there's no
-  "my orders" endpoint — this app tracks its own accepted-order id and a
-  delivered-order history **locally** (AsyncStorage) instead.
-- `POST /api/orders/:id/accept` is currently broken: it sets
-  `order.status = "accepted"`, which isn't a valid value in the `Order`
-  schema's `status` enum, so it always fails with a 500 (confirmed by
-  validating the schema directly). **This app accepts a delivery via `PATCH
-  /api/orders/:id/status` with `status: "confirmed"` instead**, which is a
-  real, working transition.
+- There's still no "my orders" endpoint — this app tracks its own
+  accepted-order id and delivered-order history **locally** (AsyncStorage),
+  then hydrates the full order objects from `GET /api/orders` by id.
 - No rider location tracking endpoint exists, so there's no live location
   feature — "Navigate" just opens Google Maps via a URL, no backend
   involved.
+
+`POST /api/orders/:id/accept` now works correctly: it requires a rider
+bearer token, sets the order's `status` to `"confirmed"` (previously it set
+an invalid enum value and always 500'd), and records `order.rider` as the
+accepting rider — so acceptance is now genuinely tracked server-side, not
+just locally. `PATCH /api/orders/:id/status` also requires a rider token and
+rejects (403) any rider trying to advance an order they didn't accept.
 
 ## Connecting to the Backend
 
@@ -81,7 +86,8 @@ src/
   context/RiderContext.js     Profile, available/active/history orders, socket
   navigation/index.js         Login vs main tab navigator
   screens/
-    LoginScreen.js             Local-only name/phone entry
+    LoginScreen.js             Phone/password login (real backend account)
+    SignupScreen.js             Name/phone/password sign up (real backend account)
     DeliveriesScreen.js        Available list, or active delivery detail
     HistoryScreen.js           Locally tracked delivered orders
     ProfileScreen.js           Rider info + log out
@@ -90,7 +96,7 @@ src/
 
 ## Golden Path
 
-1. Enter a rider name on first launch.
+1. Sign up (or log in) with a name, phone number, and password on first launch.
 2. Place an order from the customer app — it appears under Available
    Deliveries in real time (Socket.IO `order:new`).
 3. Tap "Accept delivery" — it becomes your Active Delivery and disappears
