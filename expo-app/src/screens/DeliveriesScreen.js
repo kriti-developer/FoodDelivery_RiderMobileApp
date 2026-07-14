@@ -32,8 +32,17 @@ function itemSummary(items) {
 }
 
 export default function DeliveriesScreen() {
-  const { availableOrders, activeOrder, loading, error, clearError, refresh, acceptOrder } =
-    useRider();
+  const {
+    riderProfile,
+    availableOrders,
+    activeOrder,
+    loading,
+    error,
+    clearError,
+    refresh,
+    acceptOrder,
+    toggleOnline,
+  } = useRider();
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -45,6 +54,8 @@ export default function DeliveriesScreen() {
   if (activeOrder) {
     return <ActiveDeliveryCard order={activeOrder} insets={insets} />;
   }
+
+  const isOnline = !!riderProfile?.isOnline;
 
   return (
     <View style={[styles.flex, { paddingTop: insets.top }]}>
@@ -58,7 +69,16 @@ export default function DeliveriesScreen() {
           !loading && (
             <View style={styles.emptyWrap}>
               <Ionicons name="bicycle-outline" size={56} color={colors.border} />
-              <Text style={styles.emptyText}>No deliveries waiting right now.</Text>
+              {isOnline ? (
+                <Text style={styles.emptyText}>No deliveries waiting right now.</Text>
+              ) : (
+                <>
+                  <Text style={styles.emptyText}>You're offline. Go online to see deliveries.</Text>
+                  <View style={styles.goOnlineButtonWrap}>
+                    <PrimaryButton title="Go online" onPress={() => toggleOnline(true)} />
+                  </View>
+                </>
+              )}
             </View>
           )
         }
@@ -180,11 +200,17 @@ const styles = StyleSheet.create({
   emptyWrap: {
     alignItems: 'center',
     paddingTop: 80,
+    paddingHorizontal: 32,
     gap: 12,
   },
   emptyText: {
     color: colors.textMuted,
     fontSize: 14,
+    textAlign: 'center',
+  },
+  goOnlineButtonWrap: {
+    width: 180,
+    marginTop: 4,
   },
   card: {
     backgroundColor: colors.card,
