@@ -2,6 +2,7 @@ export const OrderStatus = {
   PENDING: 'pending',
   CONFIRMED: 'confirmed',
   PREPARING: 'preparing',
+  READY: 'ready',
   ON_THE_WAY: 'on-the-way',
   DELIVERED: 'delivered',
   CANCELLED: 'cancelled',
