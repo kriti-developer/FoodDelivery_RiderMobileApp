@@ -43,19 +43,23 @@ export function RiderProvider({ children }) {
   }, []);
 
   const refreshAvailable = useCallback(async () => {
+    if (!authToken) return;
     try {
-      const res = await fetch(`${API_BASE}/api/orders/available`);
+      const res = await fetch(`${API_BASE}/api/orders/available`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
       if (!res.ok) throw new Error();
       setAvailableOrders(await res.json());
     } catch (e) {
       setError('Could not reach the backend. Is it running?');
     }
-  }, []);
+  }, [authToken]);
 
   // The backend has no "my orders" endpoint, so this device tracks its own
   // active order id and delivered-order history locally, then hydrates the
   // full order objects from GET /api/orders by id.
   const refreshActiveAndHistory = useCallback(async () => {
+    if (!authToken) return;
     const [activeId, historyRaw] = await Promise.all([
       AsyncStorage.getItem(ACTIVE_ORDER_ID_KEY),
       AsyncStorage.getItem(HISTORY_IDS_KEY),
@@ -67,7 +71,9 @@ export function RiderProvider({ children }) {
       return;
     }
     try {
-      const res = await fetch(`${API_BASE}/api/orders`);
+      const res = await fetch(`${API_BASE}/api/orders`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
       if (!res.ok) throw new Error();
       const all = await res.json();
       setActiveOrder((activeId && all.find((o) => o._id === activeId)) || null);
@@ -79,7 +85,7 @@ export function RiderProvider({ children }) {
     } catch (e) {
       setError('Could not reach the backend. Is it running?');
     }
-  }, []);
+  }, [authToken]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -95,17 +101,30 @@ export function RiderProvider({ children }) {
     const socket = io(API_BASE);
     socketRef.current = socket;
 
-    // A brand new order just came in - it's available for anyone to accept.
+    // An order is ready for pickup — only show it to riders once the
+    // restaurant has marked it ready (status === 'ready'), not when it
+    // first comes in as 'pending' (that stage belongs to the restaurant).
     socket.on('order:new', (order) => {
-      if (order.status === OrderStatus.PENDING) {
+      if (order.status === OrderStatus.READY) {
         setAvailableOrders((prev) => [...prev, order]);
       }
     });
 
     // Someone accepted (or any order changed status) - it's no longer
     // available, and if it's our active order, keep it in sync.
+    // Also: if the restaurant just marked it 'ready', add it to the list.
     socket.on('order:updated', (updatedOrder) => {
-      setAvailableOrders((prev) => prev.filter((o) => o._id !== updatedOrder._id));
+      if (updatedOrder.status === OrderStatus.READY) {
+        // Restaurant marked it ready — make it available for riders to pick up
+        setAvailableOrders((prev) =>
+          prev.some((o) => o._id === updatedOrder._id)
+            ? prev
+            : [...prev, updatedOrder]
+        );
+      } else {
+        // Order moved past 'ready' — remove from available list
+        setAvailableOrders((prev) => prev.filter((o) => o._id !== updatedOrder._id));
+      }
       setActiveOrder((prev) => (prev && prev._id === updatedOrder._id ? updatedOrder : prev));
     });
 
