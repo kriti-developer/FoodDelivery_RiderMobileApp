@@ -127,6 +127,21 @@ export function RiderProvider({ children }) {
     const socket = io(API_BASE);
     socketRef.current = socket;
 
+    // Sockets can silently drop (app backgrounded, network blip) and
+    // reconnect without the rider noticing. Re-sync from the server on
+    // every (re)connect so a missed order:updated/order:new during the
+    // gap doesn't leave a stale entry sitting in the list.
+    socket.on('connect', () => {
+      console.log('[rider socket] connected', socket.id, 'to', API_BASE);
+      refreshAvailable();
+    });
+    socket.on('connect_error', (err) => {
+      console.log('[rider socket] connect_error:', err.message);
+    });
+    socket.on('disconnect', (reason) => {
+      console.log('[rider socket] disconnected:', reason);
+    });
+
     // An order is ready for pickup — only show it to riders once the
     // restaurant has marked it ready (status === 'ready'), not when it
     // first comes in as 'pending' (that stage belongs to the restaurant).
@@ -135,7 +150,9 @@ export function RiderProvider({ children }) {
     // rider would see (and be buzzed for) deliveries anyway.
     socket.on('order:new', (order) => {
       if (order.status === OrderStatus.READY && riderProfile?.isOnline) {
-        setAvailableOrders((prev) => [...prev, order]);
+        setAvailableOrders((prev) =>
+          prev.some((o) => o._id === order._id) ? prev : [...prev, order]
+        );
         Vibration.vibrate();
       }
     });
@@ -167,7 +184,7 @@ export function RiderProvider({ children }) {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [riderProfile, refresh]);
+  }, [riderProfile, refresh, refreshAvailable]);
 
   const signUp = useCallback(async ({ name, phone, password }) => {
     try {

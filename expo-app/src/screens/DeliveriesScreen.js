@@ -22,6 +22,13 @@ function formatTime(iso) {
   return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+function waitingSince(iso) {
+  if (!iso) return '';
+  const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (minutes < 1) return 'Just now';
+  return `Waiting ${minutes}m`;
+}
+
 function formatRupees(amount) {
   return `₹${Math.round(amount || 0)}`;
 }
@@ -82,11 +89,21 @@ export default function DeliveriesScreen() {
             </View>
           )
         }
-        renderItem={({ item }) => (
+        renderItem={({ item }) => {
+          const waitingMinutes = Math.floor((Date.now() - new Date(item.updatedAt).getTime()) / 60000);
+          const isStale = waitingMinutes >= 10;
+          return (
           <View style={styles.card}>
-            <Text style={styles.restaurantName}>
-              {item.restaurant?.emoji} {item.restaurant?.name}
-            </Text>
+            <View style={styles.cardTopRow}>
+              <Text style={styles.restaurantName}>
+                {item.restaurant?.emoji} {item.restaurant?.name}
+              </Text>
+              <View style={[styles.waitBadge, isStale && styles.waitBadgeAlert]}>
+                <Text style={[styles.waitBadgeText, isStale && styles.waitBadgeAlertText]}>
+                  {waitingSince(item.updatedAt)}
+                </Text>
+              </View>
+            </View>
             <Text style={styles.itemsText}>{itemSummary(item.items)}</Text>
             <Text style={styles.metaText}>For {item.customer?.name}</Text>
             <View style={styles.cardFooter}>
@@ -101,7 +118,8 @@ export default function DeliveriesScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        )}
+          );
+        }}
       />
     </View>
   );
@@ -218,10 +236,34 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
   },
+  cardTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
   restaurantName: {
+    flex: 1,
     fontSize: 16,
     fontWeight: '700',
     color: colors.text,
+  },
+  waitBadge: {
+    backgroundColor: colors.background,
+    borderRadius: 100,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+  },
+  waitBadgeAlert: {
+    backgroundColor: '#FEE2E2',
+  },
+  waitBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  waitBadgeAlertText: {
+    color: colors.danger,
   },
   itemsText: {
     fontSize: 14,

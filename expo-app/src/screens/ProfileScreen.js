@@ -113,6 +113,9 @@ export default function ProfileScreen() {
         <View style={styles.statBlock}>
           <Text style={styles.statValue}>{formatRupees(stats.totalEarnings)}</Text>
           <Text style={styles.statLabel}>Earnings</Text>
+          {stats.earningsPerDelivery ? (
+            <Text style={styles.statCaption}>{formatRupees(stats.earningsPerDelivery)}/delivery</Text>
+          ) : null}
         </View>
       </View>
 
@@ -222,6 +225,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textMuted,
     marginTop: 4,
+  },
+  statCaption: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: 2,
   },
   buttonWrap: {
     marginTop: 32,
